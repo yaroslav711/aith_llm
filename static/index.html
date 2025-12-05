@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI mediator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #fafafa;
+            --gradient-orange: linear-gradient(135deg, rgba(255, 183, 77, 0.4) 0%, rgba(255, 152, 0, 0.3) 100%);
+            --gradient-grey: linear-gradient(135deg, rgba(189, 189, 189, 0.3) 0%, rgba(158, 158, 158, 0.2) 100%);
+            --text-primary: #212121;
+            --text-secondary: rgba(33, 33, 33, 0.7);
+            --text-tertiary: rgba(33, 33, 33, 0.5);
+            --accent-primary: rgba(255, 183, 77, 0.6);
+            --accent-secondary: rgba(189, 189, 189, 0.5);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--gradient-orange);
+            padding: 1.5rem 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            color: #212121;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .control-group label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        select {
+            padding: 0.6rem 2.5rem 0.6rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 400;
+            cursor: pointer;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23212121' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' opacity='0.5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 12px 8px;
+        }
+
+        select:hover {
+            border-color: var(--accent-primary);
+            background-color: var(--bg-secondary);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23FFB74D' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(255, 183, 77, 0.15);
+            background-color: var(--bg-secondary);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23FFB74D' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        }
+
+        select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 0.75rem;
+        }
+
+        button {
+            padding: 0.6rem 1.4rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--gradient-orange);
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 183, 77, 0.2);
+            background: linear-gradient(135deg, rgba(255, 183, 77, 0.5) 0%, rgba(255, 152, 0, 0.4) 100%);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.danger {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.4) 0%, rgba(211, 47, 47, 0.3) 100%);
+            color: var(--text-primary);
+        }
+
+        button.danger:hover {
+            box-shadow: 0 8px 24px rgba(244, 67, 54, 0.2);
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.5) 0%, rgba(211, 47, 47, 0.4) 100%);
+        }
+
+        button.white-btn {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        button.white-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-primary);
+        }
+
+        button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        button.secondary:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent-secondary);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 500px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .prompt-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #prompt-editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-tertiary);
+        }
+
+        #prompt-editor-container textarea {
+            flex: 1;
+            width: 100%;
+            padding: 1.5rem;
+            border: none;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 0.85rem;
+            resize: none;
+            outline: none;
+            background: transparent;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        #prompt-editor-container textarea::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .prompt-select-container {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .prompt-editor-actions {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.75rem;
+            background: var(--bg-secondary);
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            background: var(--bg-primary);
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 1rem 1.25rem;
+            border-radius: 20px;
+            word-wrap: break-word;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--gradient-orange);
+            color: var(--text-primary);
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 6px;
+        }
+
+        .message-timestamp {
+            font-size: 0.7rem;
+            opacity: 0.5;
+            margin-top: 0.5rem;
+            font-weight: 300;
+        }
+
+        .chat-input-container {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            resize: none;
+            max-height: 80px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(255, 183, 77, 0.15);
+            background: var(--bg-secondary);
+        }
+
+        .toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+            max-width: 300px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            border-bottom-left-radius: 6px;
+            max-width: 70%;
+            align-self: flex-start;
+            font-size: 0.9rem;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .error {
+            color: #d32f2f;
+            padding: 0.75rem 1rem;
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.2);
+            border-radius: 12px;
+            margin: 0.75rem 0;
+            font-size: 0.9rem;
+        }
+
+        .model-params {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem 1rem;
+        }
+
+        .param-control {
+            margin-bottom: 0;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.35rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .param-value {
+            font-weight: 600;
+            color: var(--accent-primary);
+            min-width: 3rem;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .param-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.08);
+            outline: none;
+            -webkit-appearance: none;
+            transition: background 0.3s ease;
+            margin: 0;
+        }
+
+        .param-slider:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255, 183, 77, 0.3);
+            transition: all 0.3s ease;
+            margin-top: -6px;
+        }
+
+        .param-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(255, 183, 77, 0.4);
+        }
+
+        .param-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(255, 183, 77, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .param-slider::-moz-range-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(255, 183, 77, 0.4);
+        }
+
+        .param-slider::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .param-slider::-moz-range-track {
+            height: 8px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        /* Toggle switch */
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-primary);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        .toggle-label {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        .mode-toggle,
+        .prompt-header,
+        .prompt-select-container {
+            display: none !important;
+        }
+
+        /* Duo mode styles */
+        .chat-container.duo-mode {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .duo-chats-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border-color);
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .chat-container.duo-mode .duo-chats-wrapper > div {
+            background: var(--bg-primary);
+        }
+
+        .duo-clear-container {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            text-align: center;
+        }
+
+        /* Стили для duo чатов */
+        .duo-chat.chat-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-panel-header {
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .chat-panel-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background: var(--bg-primary);
+        }
+
+        .chat-panel-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-panel-messages::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        .chat-panel-messages::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        /* Стили только для duo режима */
+        .duo-chat .chat-panel-input {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .duo-chat .chat-panel-input textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            resize: none;
+            max-height: 80px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .duo-chat .chat-panel-input textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(255, 183, 77, 0.15);
+        }
+
+        #duo-actions-container .chat-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AI mediator</h1>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-header">Настройки</div>
+            
+            <div class="model-params">
+                <div class="param-control" style="grid-column: span 2;">
+                    <div class="param-label">
+                        <span>Model</span>
+                    </div>
+                    <select id="model-select" style="width: 100%;">
+                        <option value="gpt-4.1">GPT-4.1</option>
+                        <option value="gpt-5.1">GPT-5.1 (o-series)</option>
+                    </select>
+                </div>
+                
+                <div class="param-control" id="reasoning-control" style="grid-column: span 2; display: none;">
+                    <div class="param-label">
+                        <span>Reasoning Effort</span>
+                        <span class="param-value" id="reasoning-value">medium</span>
+                    </div>
+                    <select id="reasoning-select" style="width: 100%;">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                
+                <div class="param-control standard-param">
+                    <div class="param-label">
+                        <span>Temperature</span>
+                        <span class="param-value" id="temp-value">0.1</span>
+                    </div>
+                    <input type="range" class="param-slider" id="temp-slider" min="0" max="1" step="0.05" value="0.1">
+                </div>
+                
+                <div class="param-control standard-param">
+                    <div class="param-label">
+                        <span>Top P</span>
+                        <span class="param-value" id="topp-value">0.9</span>
+                    </div>
+                    <input type="range" class="param-slider" id="topp-slider" min="0" max="1" step="0.05" value="0.9">
+                </div>
+                
+                <div class="param-control standard-param">
+                    <div class="param-label">
+                        <span>Frequency Penalty</span>
+                        <span class="param-value" id="freq-value">0.4</span>
+                    </div>
+                    <input type="range" class="param-slider" id="freq-slider" min="-2" max="2" step="0.1" value="0.4">
+                </div>
+                
+                <div class="param-control standard-param">
+                    <div class="param-label">
+                        <span>Presence Penalty</span>
+                        <span class="param-value" id="pres-value">0.2</span>
+                    </div>
+                    <input type="range" class="param-slider" id="pres-slider" min="-2" max="2" step="0.1" value="0.2">
+                </div>
+            </div>
+            
+            <div class="sidebar-header prompt-header">Промпт</div>
+            <div class="prompt-select-container">
+                <label for="prompt-select" style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">Выберите промпт:</label>
+                <select id="prompt-select" style="width: 100%;"></select>
+            </div>
+            <div class="sidebar-header" style="margin-top: 1rem;">Редактор</div>
+            <div id="prompt-editor-container">
+                <textarea id="prompt-editor" placeholder="Выберите промпт для редактирования..."></textarea>
+            </div>
+            <div class="prompt-editor-actions">
+                <button id="save-prompt" style="flex: 1;">Сохранить</button>
+            </div>
+        </div>
+
+        <div class="chat-container" id="chat-container">
+            <div class="duo-chats-wrapper" id="duo-chats-wrapper">
+                <div class="chat-panel duo-chat" id="duo-chat-1">
+                    <div class="chat-panel-header">User 1</div>
+                    <div class="chat-panel-messages" id="chat-messages-1"></div>
+                    <div class="chat-panel-input">
+                        <div id="error-container-1"></div>
+                        <textarea 
+                            id="chat-input-1" 
+                            class="chat-input" 
+                            placeholder="Сообщение от User 1..."
+                            rows="1"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="chat-panel duo-chat" id="duo-chat-2">
+                    <div class="chat-panel-header">User 2</div>
+                    <div class="chat-panel-messages" id="chat-messages-2"></div>
+                    <div class="chat-panel-input">
+                        <div id="error-container-2"></div>
+                        <textarea 
+                            id="chat-input-2" 
+                            class="chat-input" 
+                            placeholder="Сообщение от User 2..."
+                            rows="1"
+                        ></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Общие кнопки для duo режима -->
+            <div id="duo-actions-container" class="duo-clear-container">
+                <div class="chat-input-wrapper">
+                    <div class="chat-actions">
+                        <button id="send-btn-duo" class="white-btn">Отправить</button>
+                        <button id="regenerate-btn-duo">Перегенерировать</button>
+                        <button id="clear-btn-duo" class="danger">Очистить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const DEFAULT_PROMPT_PATH = 'prompts/duo.md';
+        let currentSessionId = null;
+        let currentPromptPath = DEFAULT_PROMPT_PATH;
+        let currentSessionIdDuo1 = null;
+        let currentSessionIdDuo2 = null;
+        let activeDuoUser = '1'; // Текущий активный пользователь ('1' или '2')
+
+        // Сохранение состояния в localStorage
+        function saveState() {
+            const state = {
+                currentPromptPath: currentPromptPath,
+                currentSessionId: currentSessionId,
+                currentSessionIdDuo1: currentSessionIdDuo1,
+                currentSessionIdDuo2: currentSessionIdDuo2,
+                model: document.getElementById('model-select').value,
+                reasoning_effort: document.getElementById('reasoning-select').value,
+                temperature: document.getElementById('temp-slider').value,
+                top_p: document.getElementById('topp-slider').value,
+                frequency_penalty: document.getElementById('freq-slider').value,
+                presence_penalty: document.getElementById('pres-slider').value,
+                promptContent: document.getElementById('prompt-editor').value,
+                messages: {
+                    user1: Array.from(document.querySelectorAll('#chat-messages-1 .message')).map(msg => ({
+                        role: msg.classList.contains('user') ? 'user' : 'assistant',
+                        content: msg.querySelector('div').textContent,
+                        timestamp: msg.querySelector('.message-timestamp')?.textContent || ''
+                    })),
+                    user2: Array.from(document.querySelectorAll('#chat-messages-2 .message')).map(msg => ({
+                        role: msg.classList.contains('user') ? 'user' : 'assistant',
+                        content: msg.querySelector('div').textContent,
+                        timestamp: msg.querySelector('.message-timestamp')?.textContent || ''
+                    }))
+                }
+            };
+            localStorage.setItem('duoBrowserState', JSON.stringify(state));
+        }
+
+        // Загрузка состояния из localStorage
+        function loadState() {
+            const saved = localStorage.getItem('duoBrowserState');
+            if (!saved) return null;
+            
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.error('Failed to load state:', e);
+                return null;
+            }
+        }
+
+        // Восстановление состояния
+        async function restoreState() {
+            const state = loadState();
+            
+            // Промпт всегда загружается из файла, не из состояния
+            // (чтобы всегда иметь актуальную версию)
+            currentPromptPath = DEFAULT_PROMPT_PATH;
+            const select = document.getElementById('prompt-select');
+            if (select) {
+                select.value = DEFAULT_PROMPT_PATH;
+            }
+
+            if (!state) {
+                // Если нет сохраненного состояния, промпт уже загружен в loadPrompts()
+                return;
+            }
+
+            // Восстанавливаем модель
+            if (state.model) {
+                document.getElementById('model-select').value = state.model;
+                updateReasoningVisibility(state.model);
+            }
+            if (state.reasoning_effort) {
+                document.getElementById('reasoning-select').value = state.reasoning_effort;
+                document.getElementById('reasoning-value').textContent = state.reasoning_effort;
+            }
+
+            // Восстанавливаем параметры
+            if (state.temperature) {
+                document.getElementById('temp-slider').value = state.temperature;
+                document.getElementById('temp-value').textContent = parseFloat(state.temperature).toFixed(2);
+            }
+            if (state.top_p) {
+                document.getElementById('topp-slider').value = state.top_p;
+                document.getElementById('topp-value').textContent = parseFloat(state.top_p).toFixed(2);
+            }
+            if (state.frequency_penalty) {
+                document.getElementById('freq-slider').value = state.frequency_penalty;
+                document.getElementById('freq-value').textContent = parseFloat(state.frequency_penalty).toFixed(1);
+            }
+            if (state.presence_penalty) {
+                document.getElementById('pres-slider').value = state.presence_penalty;
+                document.getElementById('pres-value').textContent = parseFloat(state.presence_penalty).toFixed(1);
+            }
+
+            // Восстанавливаем историю диалога (duo)
+            if (state.messages && state.messages.user1 && state.messages.user1.length > 0) {
+                const messagesContainer = document.getElementById('chat-messages-1');
+                messagesContainer.innerHTML = '';
+                state.messages.user1.forEach(msg => {
+                    addMessageDuo('1', msg.role, msg.content, msg.timestamp, true);
+                });
+            }
+            if (state.messages && state.messages.user2 && state.messages.user2.length > 0) {
+                const messagesContainer = document.getElementById('chat-messages-2');
+                messagesContainer.innerHTML = '';
+                state.messages.user2.forEach(msg => {
+                    addMessageDuo('2', msg.role, msg.content, msg.timestamp, true);
+                });
+            }
+
+            // Восстанавливаем session IDs
+            if (state.currentSessionId) {
+                currentSessionId = state.currentSessionId;
+            }
+            if (state.currentSessionIdDuo1) {
+                currentSessionIdDuo1 = state.currentSessionIdDuo1;
+            }
+            if (state.currentSessionIdDuo2) {
+                currentSessionIdDuo2 = state.currentSessionIdDuo2;
+            }
+
+            // Сохраняем состояние один раз после восстановления
+            saveState();
+        }
+
+        // Инициализация
+        async function init() {
+            setupEventListeners();
+            await loadPrompts();
+            await restoreState();
+            
+            // Сохраняем состояние при изменениях
+            setupStateSaving();
+        }
+
+        // Показать/скрыть параметры в зависимости от модели
+        function updateReasoningVisibility(model) {
+            const isOSeries = model === 'gpt-5.1' || model.startsWith('o');
+            const reasoningControl = document.getElementById('reasoning-control');
+            const standardParams = document.querySelectorAll('.standard-param');
+            
+            if (isOSeries) {
+                // O-series: показываем reasoning, скрываем стандартные параметры
+                reasoningControl.style.display = 'block';
+                standardParams.forEach(el => el.style.display = 'none');
+            } else {
+                // Стандартные модели: скрываем reasoning, показываем стандартные параметры
+                reasoningControl.style.display = 'none';
+                standardParams.forEach(el => el.style.display = 'block');
+            }
+        }
+
+        // Настройка автосохранения состояния
+        function setupStateSaving() {
+            // Сохраняем при изменении параметров
+            ['temp-slider', 'topp-slider', 'freq-slider', 'pres-slider'].forEach(id => {
+                document.getElementById(id).addEventListener('input', saveState);
+            });
+            
+            // Сохраняем при изменении модели
+            document.getElementById('model-select').addEventListener('change', (e) => {
+                updateReasoningVisibility(e.target.value);
+                saveState();
+            });
+            
+            // Сохраняем при изменении reasoning_effort
+            document.getElementById('reasoning-select').addEventListener('change', (e) => {
+                document.getElementById('reasoning-value').textContent = e.target.value;
+                saveState();
+            });
+            
+            // Сохраняем при изменении промпта в редакторе
+            document.getElementById('prompt-editor').addEventListener('input', saveState);
+        }
+
+        // Загрузка промпта (фиксированный duo.md)
+        async function loadPrompts() {
+            currentPromptPath = DEFAULT_PROMPT_PATH;
+            const select = document.getElementById('prompt-select');
+            if (select) {
+                select.innerHTML = '';
+                const option = document.createElement('option');
+                option.value = DEFAULT_PROMPT_PATH;
+                option.textContent = DEFAULT_PROMPT_PATH;
+                select.appendChild(option);
+                select.value = DEFAULT_PROMPT_PATH;
+            }
+
+            // Всегда загружаем промпт при инициализации
+            try {
+                await loadPrompt(DEFAULT_PROMPT_PATH, true);
+            } catch (error) {
+                console.error('Failed to load prompt:', error);
+                showErrorDuo(activeDuoUser, 'Ошибка загрузки промпта: ' + error.message);
+            }
+        }
+
+        // Загрузка промпта
+        async function loadPrompt(promptPath, skipSave = false) {
+            try {
+                const response = await fetch(`${API_BASE}/prompts/${encodeURIComponent(promptPath)}`);
+                const data = await response.json();
+                document.getElementById('prompt-editor').value = data.content;
+                currentPromptPath = promptPath;
+                
+                // Загружаем параметры из сессии если она существует
+                if (currentSessionId) {
+                    try {
+                        const settingsResponse = await fetch(`${API_BASE}/settings/${currentSessionId}`);
+                        const settings = await settingsResponse.json();
+                        document.getElementById('temp-slider').value = settings.temperature;
+                        document.getElementById('temp-value').textContent = settings.temperature.toFixed(2);
+                        document.getElementById('topp-slider').value = settings.top_p;
+                        document.getElementById('topp-value').textContent = settings.top_p.toFixed(2);
+                        document.getElementById('freq-slider').value = settings.frequency_penalty;
+                        document.getElementById('freq-value').textContent = settings.frequency_penalty.toFixed(1);
+                        document.getElementById('pres-slider').value = settings.presence_penalty;
+                        document.getElementById('pres-value').textContent = settings.presence_penalty.toFixed(1);
+                    } catch (e) {
+                        // Игнорируем ошибку загрузки настроек
+                    }
+                }
+                
+                if (!skipSave) {
+                    saveState();
+                }
+            } catch (error) {
+                showErrorDuo(activeDuoUser, 'Ошибка загрузки промпта: ' + error.message);
+            }
+        }
+
+        // Применение настроек (промпт + параметры)
+        async function applySettings() {
+            if (!currentPromptPath) {
+                showErrorDuo(activeDuoUser, 'Выберите промпт');
+                return;
+            }
+
+            const promptContent = document.getElementById('prompt-editor').value;
+            const model = document.getElementById('model-select').value;
+            const reasoning_effort = document.getElementById('reasoning-select').value;
+            const temperature = parseFloat(document.getElementById('temp-slider').value);
+            const top_p = parseFloat(document.getElementById('topp-slider').value);
+            const frequency_penalty = parseFloat(document.getElementById('freq-slider').value);
+            const presence_penalty = parseFloat(document.getElementById('pres-slider').value);
+
+            try {
+                const response = await fetch(`${API_BASE}/apply-settings`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        prompt_file: currentPromptPath,
+                        prompt_content: promptContent,
+                        model: model,
+                        reasoning_effort: reasoning_effort,
+                        temperature: temperature,
+                        top_p: top_p,
+                        frequency_penalty: frequency_penalty,
+                        presence_penalty: presence_penalty
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    currentSessionId = data.session_id;
+                    saveState();
+                    showToast('Настройки применены! Промпт сохранен, параметры модели обновлены.');
+                } else {
+                    showErrorDuo(activeDuoUser, 'Ошибка применения настроек');
+                }
+            } catch (error) {
+                showErrorDuo(activeDuoUser, 'Ошибка применения настроек: ' + error.message);
+            }
+        }
+
+        // Сохранение промпта (старая функция, оставлена для совместимости)
+        async function savePrompt() {
+            await applySettings();
+        }
+
+        // Отправка сообщения в duo режиме
+        async function sendMessageDuo(userNum) {
+            const input = document.getElementById(`chat-input-${userNum}`);
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (!currentPromptPath) {
+                showErrorDuo(userNum, 'Выберите промпт');
+                return;
+            }
+
+            const messagesContainer = document.getElementById(`chat-messages-${userNum}`);
+            addMessageDuo(userNum, 'user', message);
+            input.value = '';
+            setLoadingDuo(userNum, true);
+
+            try {
+                const model = document.getElementById('model-select').value;
+                const reasoning_effort = document.getElementById('reasoning-select').value;
+                const temperature = parseFloat(document.getElementById('temp-slider').value);
+                const top_p = parseFloat(document.getElementById('topp-slider').value);
+                const frequency_penalty = parseFloat(document.getElementById('freq-slider').value);
+                const presence_penalty = parseFloat(document.getElementById('pres-slider').value);
+                
+                // В duo режиме используем общий session_id для обоих пользователей
+                // Используем существующий или создаем новый
+                let sessionId = currentSessionIdDuo1 || currentSessionIdDuo2;
+                
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: message,
+                        prompt_file: currentPromptPath,
+                        session_id: sessionId,
+                        model: model,
+                        reasoning_effort: reasoning_effort,
+                        temperature: temperature,
+                        top_p: top_p,
+                        frequency_penalty: frequency_penalty,
+                        presence_penalty: presence_penalty,
+                        user_role: `user_${userNum}` // Для duo режима
+                    })
+                });
+
+                const data = await response.json();
+                // Обновляем оба session_id одинаковым значением
+                const newSessionId = data.session_id;
+                currentSessionIdDuo1 = newSessionId;
+                currentSessionIdDuo2 = newSessionId;
+
+                if (data.error) {
+                    showErrorDuo(userNum, data.response);
+                } else {
+                    // В duo режиме может быть несколько сообщений для разных пользователей
+                    if (data.responses && Array.isArray(data.responses) && data.responses.length > 0) {
+                        // Обрабатываем все сообщения
+                        data.responses.forEach(msg => {
+                            const recipient = msg.recipient || msg.recipient_role;
+                            const content = msg.text || msg.content;
+                            const msgType = msg.type || 'other';
+                            if (recipient === 'user_1') {
+                                addMessageDuo('1', 'assistant', content, null, false, msgType);
+                            } else if (recipient === 'user_2') {
+                                addMessageDuo('2', 'assistant', content, null, false, msgType);
+                            } else {
+                                // Если recipient не указан, отправляем текущему пользователю
+                                addMessageDuo(userNum, 'assistant', content, null, false, msgType);
+                            }
+                        });
+                    } else if (data.response) {
+                        // Одно сообщение (fallback)
+                        addMessageDuo(userNum, 'assistant', data.response);
+                    } else {
+                        console.error('No response data:', data);
+                        showErrorDuo(userNum, 'Пустой ответ от сервера');
+                    }
+                    setTimeout(saveState, 150);
+                }
+            } catch (error) {
+                showErrorDuo(userNum, 'Ошибка отправки: ' + error.message);
+            } finally {
+                setLoadingDuo(userNum, false);
+            }
+        }
+
+        // Перегенерация в duo режиме
+        async function regenerateLastDuo(userNum) {
+            // В duo режиме используем общий session_id
+            const sessionId = currentSessionIdDuo1 || currentSessionIdDuo2;
+            
+            if (!sessionId) {
+                showErrorDuo(userNum, 'Нет активной сессии');
+                return;
+            }
+
+            if (!currentPromptPath) {
+                showErrorDuo(userNum, 'Выберите промпт');
+                return;
+            }
+
+            setLoadingDuo(userNum, true);
+            try {
+                const model = document.getElementById('model-select').value;
+                const reasoning_effort = document.getElementById('reasoning-select').value;
+                const temperature = parseFloat(document.getElementById('temp-slider').value);
+                const top_p = parseFloat(document.getElementById('topp-slider').value);
+                const frequency_penalty = parseFloat(document.getElementById('freq-slider').value);
+                const presence_penalty = parseFloat(document.getElementById('pres-slider').value);
+                
+                // Не удаляем заранее - сервер вернет точную информацию о том, что нужно удалить
+
+                const response = await fetch(`${API_BASE}/regenerate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        prompt_file: currentPromptPath,
+                        model: model,
+                        reasoning_effort: reasoning_effort,
+                        temperature: temperature,
+                        top_p: top_p,
+                        frequency_penalty: frequency_penalty,
+                        presence_penalty: presence_penalty,
+                        user_role: `user_${userNum}`
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    showErrorDuo(userNum, data.response);
+                } else {
+                    // Сервер вернул информацию о том, какие сообщения были удалены - удаляем их из UI
+                    // removed_messages содержит recipient_role в порядке удаления (уже перевернуты на сервере)
+                    console.log('Regenerate response:', data);
+                    console.log('Removed messages:', data.removed_messages);
+                    
+                    if (data.removed_messages && Array.isArray(data.removed_messages) && data.removed_messages.length > 0) {
+                        const messages1 = document.getElementById('chat-messages-1');
+                        const messages2 = document.getElementById('chat-messages-2');
+                        
+                        // Проходим removed_messages в прямом порядке (сервер уже перевернул их)
+                        for (let i = 0; i < data.removed_messages.length; i++) {
+                            const recipient = data.removed_messages[i];
+                            // Нормализуем recipient_role (может быть user_1, USER_1, user_2, USER_2)
+                            const normalizedRecipient = (recipient && typeof recipient === 'string') ? recipient.toLowerCase() : null;
+                            let targetMessages = null;
+                            
+                            if (normalizedRecipient === 'user_1') {
+                                targetMessages = messages1;
+                            } else if (normalizedRecipient === 'user_2') {
+                                targetMessages = messages2;
+                            }
+                            
+                            if (targetMessages) {
+                                // Удаляем последнее сообщение агента из соответствующего чата
+                                let removed = false;
+                                for (let j = targetMessages.children.length - 1; j >= 0; j--) {
+                                    const child = targetMessages.children[j];
+                                    const indicatorId = normalizedRecipient === 'user_1' ? 'typing-indicator-1' : 'typing-indicator-2';
+                                    if (child.id === indicatorId) continue;
+                                    if (child.classList.contains('assistant')) {
+                                        child.remove();
+                                        removed = true;
+                                        break;
+                                    }
+                                }
+                                // Если не нашли сообщение - возможно оно уже было удалено или не существует
+                                if (!removed) {
+                                    console.warn(`Не удалось найти сообщение для удаления в чате ${normalizedRecipient}`);
+                                }
+                            } else if (normalizedRecipient) {
+                                console.warn(`Неизвестный recipient_role: ${recipient}`);
+                            }
+                        }
+                    } else {
+                        // Fallback: если removed_messages не пришел или пустой, удаляем последнее сообщение агента из активного чата
+                        console.warn('removed_messages пустой или не определен, используем fallback');
+                        const activeMessages = userNum === '1' 
+                            ? document.getElementById('chat-messages-1')
+                            : document.getElementById('chat-messages-2');
+                        if (activeMessages) {
+                            for (let j = activeMessages.children.length - 1; j >= 0; j--) {
+                                const child = activeMessages.children[j];
+                                const indicatorId = `typing-indicator-${userNum}`;
+                                if (child.id === indicatorId) continue;
+                                if (child.classList.contains('assistant')) {
+                                    child.remove();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // В duo режиме может быть несколько сообщений для разных пользователей
+                    if (data.responses && Array.isArray(data.responses)) {
+                        // Обрабатываем все сообщения
+                        data.responses.forEach(msg => {
+                            const recipient = msg.recipient || msg.recipient_role;
+                            const content = msg.text || msg.content;
+                            const msgType = msg.type || 'other';
+                            if (recipient === 'user_1') {
+                                addMessageDuo('1', 'assistant', content, null, false, msgType);
+                            } else if (recipient === 'user_2') {
+                                addMessageDuo('2', 'assistant', content, null, false, msgType);
+                            }
+                        });
+                    } else if (data.response) {
+                        // Одно сообщение (fallback)
+                        addMessageDuo(userNum, 'assistant', data.response);
+                    }
+                    saveState();
+                }
+            } catch (error) {
+                showErrorDuo(userNum, 'Ошибка перегенерации: ' + error.message);
+            } finally {
+                setLoadingDuo(userNum, false);
+            }
+        }
+
+        // Добавление сообщения в duo режиме
+        function addMessageDuo(userNum, role, content, customTimestamp = null, skipSave = false, msgType = null) {
+            const messages = document.getElementById(`chat-messages-${userNum}`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = content;
+            messageDiv.appendChild(contentDiv);
+            
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+            
+            if (!skipSave) {
+                setTimeout(saveState, 100);
+            }
+        }
+
+        // Показать ошибку в duo режиме
+        function showErrorDuo(userNum, message) {
+            const container = document.getElementById(`error-container-${userNum}`);
+            container.innerHTML = `<div class="error">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Установить состояние загрузки в duo режиме
+        function setLoadingDuo(userNum, loading) {
+            const btn = document.querySelector(`.send-btn-duo[data-user="${userNum}"]`);
+            if (btn) {
+                btn.disabled = loading;
+            }
+            if (loading) {
+                showTypingIndicatorDuo(userNum);
+            } else {
+                hideTypingIndicatorDuo(userNum);
+            }
+        }
+
+        // Показать индикатор печати в duo режиме
+        function showTypingIndicatorDuo(userNum) {
+            const messages = document.getElementById(`chat-messages-${userNum}`);
+            const existingIndicator = document.getElementById(`typing-indicator-${userNum}`);
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+
+            const indicator = document.createElement('div');
+            indicator.id = `typing-indicator-${userNum}`;
+            indicator.className = 'typing-indicator';
+            indicator.innerHTML = `
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            messages.appendChild(indicator);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Скрыть индикатор печати в duo режиме
+        function hideTypingIndicatorDuo(userNum) {
+            const indicator = document.getElementById(`typing-indicator-${userNum}`);
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        // Очистка истории для duo режима
+        async function clearHistoryDuo() {
+            if (!confirm('Очистить историю обоих чатов?')) {
+                return;
+            }
+
+            try {
+                // В duo режиме используем общий session_id
+                const sessionId = currentSessionIdDuo1 || currentSessionIdDuo2;
+                if (sessionId) {
+                    await fetch(`${API_BASE}/clear`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({session_id: sessionId})
+                    });
+                    document.getElementById('chat-messages-1').innerHTML = '';
+                    document.getElementById('chat-messages-2').innerHTML = '';
+                    currentSessionIdDuo1 = null;
+                    currentSessionIdDuo2 = null;
+                }
+
+                localStorage.removeItem('duoBrowserState');
+            } catch (error) {
+                showErrorDuo('1', 'Ошибка очистки: ' + error.message);
+            }
+        }
+
+        // Показать уведомление (toast)
+        function showToast(message) {
+            // Удаляем предыдущее уведомление если есть
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Удаляем через 3 секунды
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            const promptSelect = document.getElementById('prompt-select');
+            if (promptSelect) {
+                promptSelect.addEventListener('change', async (e) => {
+                    await loadPrompt(e.target.value);
+                    saveState();
+                });
+            }
+
+            // Обновление значений параметров при изменении ползунков
+            document.getElementById('temp-slider').addEventListener('input', (e) => {
+                document.getElementById('temp-value').textContent = parseFloat(e.target.value).toFixed(2);
+            });
+            
+            document.getElementById('topp-slider').addEventListener('input', (e) => {
+                document.getElementById('topp-value').textContent = parseFloat(e.target.value).toFixed(2);
+            });
+            
+            document.getElementById('freq-slider').addEventListener('input', (e) => {
+                document.getElementById('freq-value').textContent = parseFloat(e.target.value).toFixed(1);
+            });
+            
+            document.getElementById('pres-slider').addEventListener('input', (e) => {
+                document.getElementById('pres-value').textContent = parseFloat(e.target.value).toFixed(1);
+            });
+
+            document.getElementById('save-prompt').addEventListener('click', savePrompt);
+
+            // Duo mode handlers - общие кнопки для активного чата
+            document.getElementById('send-btn-duo').addEventListener('click', () => {
+                sendMessageDuo(activeDuoUser);
+            });
+
+            document.getElementById('regenerate-btn-duo').addEventListener('click', () => {
+                regenerateLastDuo(activeDuoUser);
+            });
+
+            document.getElementById('clear-btn-duo').addEventListener('click', clearHistoryDuo);
+
+            // Отслеживаем активный input для duo режима
+            document.getElementById('chat-input-1').addEventListener('focus', () => {
+                activeDuoUser = '1';
+            });
+
+            document.getElementById('chat-input-1').addEventListener('input', () => {
+                activeDuoUser = '1';
+            });
+
+            document.getElementById('chat-input-2').addEventListener('focus', () => {
+                activeDuoUser = '2';
+            });
+
+            document.getElementById('chat-input-2').addEventListener('input', () => {
+                activeDuoUser = '2';
+            });
+
+            // Enter для duo mode
+            document.getElementById('chat-input-1').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessageDuo('1');
+                }
+            });
+
+            document.getElementById('chat-input-2').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessageDuo('2');
+                }
+            });
+
+            document.getElementById('chat-input-1').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            document.getElementById('chat-input-2').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
+
+        // Запуск при загрузке страницы
+        init();
+    </script>
+</body>
+</html>
+
