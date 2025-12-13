@@ -21,11 +21,24 @@
 - В процессе общения, делится точкой зрения партнера
 - Находит точки соприкосновения и помогает найти компромис / решение проблемы
 
-## Что за этим стоит (очень коротко)
-- Флоу следующий: понять обе стороны → найти общую цель → предложить план по достижению цели → сопровождать пару на пути к ней
-- Лидирует диалог, но остается непредвзятым (благодаря тому, что общается с обоими партнерами)
-- Психологические инструменты: инсайты, рефрейминг, микрошаги, прогресс-маркеры
-- Если запрос уходит в клинику/травму — советует обратиться к специалисту
+## Архитектура: Multi-Agent System
+
+### Агент 1: Onboarding (7-10 сообщений)
+- **Задача**: Установить контакт, использовать хуки для вовлечения
+- **Классификацировать конфликт**:
+  - Разрешимость (Готтман): resolvable / perpetual / gridlocked
+  - Сфера: деньги, секс, дети, родственники, быт, время, планы
+  - Природа: рациональный / эмоциональный
+  - Форма: открытый / скрытый
+  - Уровень угрозы: базовый (доверие) / поверхностный
+- **Передача**: После классификации → бесшовный переход к Therapy Agent
+
+### Агент 2: Therapy (глубокая работа)
+- **Задача**: Вести пару к решению, используя психологические школы
+- **Подход**: На основе классификации подключается специализированный плейбук
+- **Школы**: EFT, CBT, Gottman, ТА, Psychodynamic, Systemic, Existential
+- **Инструменты**: Инсайты, рефрейминг, микрошаги, синтез
+- **Границы**: Если клиника/травма → направляет к специалисту
 
 ## Быстрый старт
 ```bash
@@ -49,8 +62,49 @@ python app.py
 
 Открыть UI: http://localhost:8000
 
+## Метрики качества
+
+### Выбранные метрики
+- **No double-messaging**: агент не отправляет пользователю новое сообщение, пока тот не ответил на предыдущее.
+- **Recipient correctness**: каждое сообщение от агента имеет `recipient` ∈ `{user_1, user_2}`.
+- **Turn-to-handoff**: номер хода, на котором агент впервые переключился в `therapy`.
+- **Schema validity rate**: доля ходов, где ответ валиден по `AgentResponse`.
+
+### Итоговые значения метрик (пример прогона)
+Агрегат по файлу `eval/out/summary_20251213_151338.json` (24 прогона, 8 сценариев):
+- **Schema validity rate**: **1.00**
+- **Recipient correctness**: **1.00**
+- **Turn-to-handoff**: mean **7.17**, median **7.50**, min **6**, max **8** (handoff rate **1.00**)
+- **No double-messaging violations**: total **15**, mean/run **0.63**, median/run **0**, max/run **3**
+- **Latency**:
+  - p50: mean **7264 ms**, median **6763 ms** (min **2532 ms**, max **11777 ms**)
+  - p95: mean **19650 ms**, median **19872 ms** (min **13466 ms**, max **29158 ms**)
+
 ## Структура
-- `app.py` — FastAPI сервер и API для чатов/промпта
-- `prompts/duo.md` — системный промпт агента
-- `static/index.html` — минимальный UI тестера
-- `requirements.txt` — зависимости
+```
+llm_project/
+├── app.py                      # FastAPI endpoints (тонкий слой)
+├── src/
+│   ├── agents/
+│   │   ├── onboarding.py       # Onboarding agent
+│   │   ├── therapy.py          # Therapy agent  
+│   │   └── graph.py            # LangGraph workflow
+│   ├── classification/
+│   │   └── classifier.py       # Multi-axis classifier
+│   ├── playbooks/
+│   │   └── loader.py           # Playbook selection
+│   └── models/
+│       └── schemas.py          # Pydantic models
+├── prompts/
+│   ├── onboarding.md           # Onboarding prompt
+│   ├── therapy.md              # Therapy prompt
+│   ├── conflict_mapping.md     # Mapping logic
+│   └── playbooks/              # 7 psychological approaches
+├── static/
+│   └── index.html              # Web UI
+├── eval/
+│   ├── scenarios.json          # Набор сценариев диалогов для offline-eval
+│   ├── run_eval.py             # Прогон сценариев + расчёт метрик + запись артефактов
+│   └── out/                    # Результаты прогонов (summary_*.json, transcript_*.jsonl)
+└── requirements.txt            # Includes langgraph, langchain
+```
