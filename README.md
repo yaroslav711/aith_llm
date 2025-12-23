@@ -46,7 +46,7 @@
 - История сообщений и состояние (текущий агент, classification) хранятся в состоянии графа.
 - После handoff система переключается на Therapy и продолжает диалог, используя `summary` + историю как контекст.
 
-## Быстрый старт
+## UI
 ```bash
 cd /Users/y.moskalenko/Desktop/llm_project
 python3 -m venv .venv
@@ -54,19 +54,33 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Создайте `.env` в корне проекта:
+Создайте `.env` в корне проекта (можно скопировать пример) и заполните переменные окружения:
+
+```bash
+cp .env.example .env
 ```
-OPENAI_API_KEY=sk-...
-DEFAULT_MODEL=gpt-4.1
-PORT=8000
-```
+
+### Web UI (FastAPI)
 
 Запуск:
 ```bash
+source .venv/bin/activate
 python app.py
 ```
 
 Открыть UI: http://localhost:8000
+
+### Telegram Bot
+
+Запустите бота:
+```bash
+source .venv/bin/activate
+python main.py
+```
+
+### Пример работы
+
+![Telegram Bot Duo Mode](docs/images/telegram-bot-duo-mode.png)
 
 ## Метрики качества
 
@@ -89,7 +103,8 @@ python app.py
 ## Структура
 ```
 llm_project/
-├── app.py                      # FastAPI endpoints (тонкий слой)
+├── app.py                      # FastAPI endpoints (Web UI)
+├── main.py                     # Telegram bot
 ├── src/
 │   ├── agents/
 │   │   ├── onboarding.py       # Onboarding agent
@@ -99,8 +114,11 @@ llm_project/
 │   │   └── classifier.py       # Multi-axis classifier
 │   ├── playbooks/
 │   │   └── loader.py           # Playbook selection
-│   └── models/
-│       └── schemas.py          # Pydantic models
+│   ├── models/
+│   │   └── schemas.py          # Pydantic models
+│   └── transport/
+│       ├── session_manager.py  # In-memory session management
+│       └── telegram_handlers.py # Telegram bot handlers
 ├── prompts/
 │   ├── onboarding.md           # Onboarding prompt
 │   ├── therapy.md              # Therapy prompt
@@ -112,5 +130,6 @@ llm_project/
 │   ├── scenarios.json          # Набор сценариев диалогов для offline-eval
 │   ├── run_eval.py             # Прогон сценариев + расчёт метрик + запись артефактов
 │   └── out/                    # Результаты прогонов (summary_*.json, transcript_*.jsonl)
-└── requirements.txt            # Includes langgraph, langchain
+├── requirements.txt            # Includes langgraph, langchain, python-telegram-bot
+└── env.example                 # Example env file (Web + Telegram)
 ```

@@ -320,3 +320,4 @@ Sometimes the honest answer is: **We're incompatible.**
    - "Договоритесь о сроке: через X месяцев вернётесь к этому разговору. Если всё ещё не aligned — примете решение"
 
 
+

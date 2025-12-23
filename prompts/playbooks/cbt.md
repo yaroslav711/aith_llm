@@ -150,3 +150,4 @@ If conflict is deeply emotional (fear of abandonment, past trauma), CBT alone wo
 4. "Выберите одну проблему (например: кто готовит ужин). Сядьте вместе, brainstorm 10 решений (даже смешных). Выберите одно на пробу"
 
 
+

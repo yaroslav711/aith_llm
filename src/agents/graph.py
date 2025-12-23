@@ -70,7 +70,7 @@ def route_agent(state: MediatorState) -> str:
     last_resp = state.get("last_response")
     
     # If onboarding triggered handoff, go to therapy
-    if last_resp and last_resp.get("handoff"):
+    if last_resp and isinstance(last_resp, dict) and last_resp.get("handoff"):
         return "therapy"
     
     # Otherwise stay in onboarding (return END via edge)
@@ -98,8 +98,10 @@ def build_mediator_graph():
     def router_entry(state: MediatorState) -> str:
         """Route to correct agent based on session state."""
         current = state.get("current_agent", "onboarding")
+        # Ensure we always return a valid route
         if current == "therapy":
             return "therapy"
+        # Default to onboarding
         return "onboarding"
     
     # Set conditional entry
